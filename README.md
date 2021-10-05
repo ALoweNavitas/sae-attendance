@@ -6,6 +6,10 @@ This is a small script that takes the Attendance Statement csv file from Navigat
 
 **<h2>Requirements and how to install them</h2>**
 
+**<h3>Installing Python</h3>**
+
+Install Python 3.XX following the instructions [found here](https://www.python.org/downloads/).
+
 <h3>Python dependancies</h3>
 
 Open Command Prompt and cd to the directory of the script, then use ```pip install -r requirements.txt``` to install the required dependenancies and versions if you do not have them installed already.
