@@ -1,0 +1,1 @@
+"C:\Users\adam_\Documents\GitHub\Navitas\sae-attendance\venv\Scripts\python.exe" "C:\Users\adam_\Documents\GitHub\Navitas\sae-attendance\main.py"
