@@ -1,3 +1,4 @@
+from sqlite3.dbapi2 import Connection
 import pandas as pd
 import os
 import json
@@ -20,8 +21,8 @@ modreg.updateModReg.update()
 
 # Variables
 trimester = '21T3'
-modRegDb = connect('modRegDB.db')
-attendanceDatabase = connect('attendanceDB.db')
+modRegDb = os.environ.get('modRegDB')
+cnx = connect(modRegDb)
 
 #  Google sheets setup
 SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
@@ -36,19 +37,16 @@ attendanceSheet = '1kglRtY6yucrg6yL0cpq5mmbmyH6u2norcuZyo-uLAtQ' # Google Sheet 
 
 
 # Student lookup using the ModReg in SQL
-df = pd.read_sql('SELECT "StudentCode", "ModuleStatus", "CampusName" FROM modReg WHERE "StudyPeriod/RPL" = "%s" AND "ModuleStatus" = "Confirmed"' % (trimester), modRegDb)
-df['StudentCode'] = df['StudentCode'].astype(int)
+df = pd.read_sql('SELECT "StudentCode", "ModuleStatus", "CampusName" FROM modReg WHERE "StudyPeriod/RPL" = "%s" AND "ModuleStatus" = "Confirmed"' % (trimester), cnx)
 df.drop_duplicates(['StudentCode'], inplace=True)
 studentLookup = dict(zip(df['StudentCode'], df['CampusName']))
 
 # New student lookup using attendance DB in SQL
-df = pd.read_sql('SELECT * FROM newStudents', modRegDb)
-df['StudentCode'] = df['StudentCode'].astype(int)
+df = pd.read_sql('SELECT * FROM newStudents', cnx)
 newStudentLookup = dict(zip(df['StudentCode'], df['type']))
 
 # Student route lookup using attendance DB in SQL
-df = pd.read_sql('SELECT * FROM studentRoute', modRegDb)
-df['StudentCode'] = df['StudentCode'].astype(int)
+df = pd.read_sql('SELECT * FROM studentRoute', cnx)
 studentRouteLookup = dict(zip(df['StudentCode'], df['type']))
 
 # JSON file to lookup the teaching weeks
@@ -69,7 +67,7 @@ df['newStudent'] = df['StudentCode'].map(newStudentLookup)
 df['studentRoute'] = df['StudentCode'].map(studentRouteLookup)
 df['lectureDate'] = df['lectureDate'].astype(str) # Google API wont accept datetime due to JSON parsing.
 df.fillna('', inplace=True) # Google API wont accept NaN values due to JSON parsing.
-df.to_sql(name=trimester, con=attendanceDatabase, if_exists='replace') # Creates a small SQLite3 DB for managing.
+df.to_sql(name=trimester, con=cnx, if_exists='replace') # Creates a small SQLite3 DB for managing.
 
 # Update Google Sheets
 data = df.copy()
