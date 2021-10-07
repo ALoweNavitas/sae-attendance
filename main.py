@@ -1,4 +1,3 @@
-from sqlite3.dbapi2 import Connection
 import pandas as pd
 import os
 import json
@@ -20,13 +19,13 @@ dir = os.getcwd()
 modreg.updateModReg.update()
 
 # Variables
-trimester = '21T3'
-modRegDb = os.environ.get('modRegDB')
-cnx = connect(modRegDb)
+trimester = '21T3' # Change this for each trimester
+# modRegDb = os.environ.get('modRegDB') # You can use environment variables for safer code. 
+cnx = connect('modRegDB.db')
 
 #  Google sheets setup
 SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
-SERVICE_ACCOUNT_FILE = 'keys.json' # this is a dangerous file. Do not share publically.
+SERVICE_ACCOUNT_FILE = 'keys.json' # this is a dangerous file. Do not share publically. Safer to store locally on machine and in an environment variable.
 credentials = None
 credentials = service_account.Credentials.from_service_account_file(
         SERVICE_ACCOUNT_FILE, scopes=SCOPES)
@@ -37,7 +36,12 @@ attendanceSheet = '1kglRtY6yucrg6yL0cpq5mmbmyH6u2norcuZyo-uLAtQ' # Google Sheet 
 
 
 # Student lookup using the ModReg in SQL
-df = pd.read_sql('SELECT "StudentCode", "ModuleStatus", "CampusName" FROM modReg WHERE "StudyPeriod/RPL" = "%s" AND "ModuleStatus" = "Confirmed"' % (trimester), cnx)
+'''
+It is important that you ensure the modRegDB is updated with the relevant registrations for each programme and campus. The modreg.py function queries the Google Sheet
+outlined in the README.md file, so be sure to follow the instructions. The trimester variable will then be used in the SQL statement to pull students relevant to that trimester.
+Likewise, for each term you need to update the new students table and the student route table, to highlight these students in the data. Maybe there is a better solution for this?
+'''
+df = pd.read_sql('SELECT "StudentCode", "ModuleStatus", "CampusName" FROM modReg WHERE "StudyPeriod/RPL" = "%s" AND "ModuleStatus" = "Confirmed"' % (trimester), cnx) 
 df.drop_duplicates(['StudentCode'], inplace=True)
 studentLookup = dict(zip(df['StudentCode'], df['CampusName']))
 
@@ -49,11 +53,18 @@ newStudentLookup = dict(zip(df['StudentCode'], df['type']))
 df = pd.read_sql('SELECT * FROM studentRoute', cnx)
 studentRouteLookup = dict(zip(df['StudentCode'], df['type']))
 
+'''
+This dictionary actually contains more information which can be mapped to students for further analysis, such as APP metrics. 
+'''
 # JSON file to lookup the teaching weeks
 with open('dictionary.json') as json_file:
     data = json.load(json_file)
 
 dates = data['dates'] # Converts the date of the lecture to the teaching week.
+# disableCodes = data['disableCodes']
+# ethnicCodes = data['ethnicCodes']
+# termStartDates = data['termStartDates']
+# grade_dict = data['grade_dict']
 
 # Create the dataframe
 df = pd.read_csv('Attendance Statement.csv')
