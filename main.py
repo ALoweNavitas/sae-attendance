@@ -42,6 +42,7 @@ outlined in the README.md file, so be sure to follow the instructions. The trime
 Likewise, for each term you need to update the new students table and the student route table, to highlight these students in the data. Maybe there is a better solution for this?
 '''
 df = pd.read_sql('SELECT "StudentCode", "ModuleStatus", "CampusName" FROM modReg WHERE "StudyPeriod/RPL" = "%s" AND "ModuleStatus" = "Confirmed"' % (trimester), cnx) 
+df['StudentCode'] = df['StudentCode'].astype(int)
 df.drop_duplicates(['StudentCode'], inplace=True)
 studentLookup = dict(zip(df['StudentCode'], df['CampusName']))
 
